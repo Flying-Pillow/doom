@@ -61,6 +61,21 @@ body {
   pointer-events: none;
 }
 
+.startup-error {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1rem, 3vw, 2rem);
+  z-index: 2;
+  max-width: min(42rem, calc(100vw - 2rem));
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(255, 117, 94, 0.8);
+  background: rgba(24, 8, 8, 0.94);
+  color: #ffd0c5;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  transform: translateX(-50%);
+}
+
 .hud-row {
   display: flex;
   flex-wrap: wrap;

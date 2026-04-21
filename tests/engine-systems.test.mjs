@@ -84,6 +84,18 @@ class FakeWebGLContext {
   }
 }
 
+class FakeCanvas2DContext {
+  constructor() {
+    this.calls = [];
+    this.fillStyle = "";
+    this.imageSmoothingEnabled = true;
+  }
+
+  fillRect(...value) {
+    this.calls.push(["fillRect", value, this.fillStyle]);
+  }
+}
+
 class FakeAudio {
   constructor() {
     this.src = "";
@@ -278,6 +290,55 @@ test("createRenderer falls back to experimental WebGL and keeps default context 
     powerPreference: "high-performance",
     preserveDrawingBuffer: false,
   });
+});
+
+test("createRenderer falls back to 2d canvas when WebGL is unavailable", async () => {
+  const { createRenderer } = await importModule(rendererJsUrl);
+  const requestedContexts = [];
+  const context2d = new FakeCanvas2DContext();
+  const canvas = {
+    width: 320,
+    height: 200,
+    getBoundingClientRect() {
+      return { width: 320, height: 200 };
+    },
+    getContext(type, attributes) {
+      requestedContexts.push({ type, attributes });
+      return type === "2d" ? context2d : null;
+    },
+  };
+
+  const renderer = createRenderer(canvas);
+  renderer.beginFrame({ timestamp: 16 });
+  const worldSummary = renderer.drawWorld({
+    currentLevelId: "level-01",
+    player: {
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { yaw: 0, pitch: 0, roll: 0 },
+      weaponId: "pistol",
+    },
+    enemies: [
+      {
+        id: "trooper-1",
+        type: "trooper",
+        health: 20,
+        position: { x: 0, y: 0, z: 8 },
+      },
+    ],
+    pickups: [],
+    doors: [],
+  });
+
+  assert.equal(renderer.gl, null);
+  assert.equal(renderer.backend, "2d");
+  assert.equal(renderer.getFrameState().backend, "2d");
+  assert.deepEqual(
+    requestedContexts.map(({ type }) => type),
+    ["webgl", "experimental-webgl", "2d"],
+  );
+  assert.ok(worldSummary.visibleSpriteCount >= 1);
+  assert.ok(context2d.calls.some(([name]) => name === "fillRect"));
+  assert.equal(context2d.imageSmoothingEnabled, false);
 });
 
 test("createInputController normalizes keyboard and mouse state into gameplay actions", async () => {

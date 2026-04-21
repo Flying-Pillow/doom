@@ -36,6 +36,14 @@ function createHudLayer(documentRef) {
   return hudLayer;
 }
 
+function createStartupErrorLayer(documentRef, message) {
+  const errorLayer = documentRef.createElement("div");
+  errorLayer.className = "startup-error";
+  errorLayer.setAttribute("role", "alert");
+  errorLayer.textContent = `Renderer failed to start: ${message}`;
+  return errorLayer;
+}
+
 function resolveAnimationClock(windowRef) {
   if (typeof windowRef.requestAnimationFrame === "function" && typeof windowRef.cancelAnimationFrame === "function") {
     return {
@@ -89,7 +97,17 @@ export function startGame(rootElement) {
   shell.append(stage);
   rootElement.replaceChildren(shell);
 
-  const renderer = createRenderer(canvas);
+  let renderer;
+  try {
+    renderer = createRenderer(canvas);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    canvas.dataset.renderStatus = "startup-error";
+    canvas.dataset.renderError = message;
+    stage.append(createStartupErrorLayer(documentRef, message));
+    throw error;
+  }
+
   const input = createInputController(window, {
     pointerTarget: canvas,
     documentRef,

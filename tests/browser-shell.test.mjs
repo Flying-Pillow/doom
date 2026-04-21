@@ -95,6 +95,18 @@ class FakeWebGLContext {
   }
 }
 
+class FakeCanvas2DContext {
+  constructor() {
+    this.calls = [];
+    this.fillStyle = "";
+    this.imageSmoothingEnabled = true;
+  }
+
+  fillRect(...value) {
+    this.calls.push(["fillRect", value, this.fillStyle]);
+  }
+}
+
 class FakeElement extends FakeEventTarget {
   constructor(tagName, ownerDocument) {
     super();
@@ -143,6 +155,10 @@ class FakeElement extends FakeEventTarget {
       return this.ownerDocument.webglContext;
     }
 
+    if (this.tagName === "CANVAS" && type === "2d") {
+      return this.ownerDocument.canvas2dContext;
+    }
+
     return null;
   }
 
@@ -160,6 +176,7 @@ class FakeDocument extends FakeEventTarget {
     this.elementsById = new Map();
     this.pointerLockElement = null;
     this.webglContext = new FakeWebGLContext();
+    this.canvas2dContext = new FakeCanvas2DContext();
     this.body = new FakeElement("body", this);
     this.body.setAttribute("id", "body");
   }
@@ -428,5 +445,31 @@ test("module bootstrap waits for DOMContentLoaded when the document is still loa
     ]);
 
     runtime.stop();
+  });
+});
+
+test("startGame surfaces a visible renderer startup error when WebGL is unavailable", async () => {
+  const environment = createEnvironment({ readyState: "loading" });
+  environment.document.webglContext = null;
+  environment.document.canvas2dContext = null;
+
+  await withDomGlobals(environment, async () => {
+    const module = await importMainModule();
+
+    assert.throws(
+      () => module.startGame(environment.app),
+      /Unable to initialize renderer/,
+    );
+
+    const shell = environment.app.children[0];
+    const stage = shell.children[0];
+    const [canvas, hudLayer, errorLayer] = stage.children;
+
+    assert.equal(canvas.className, "game-canvas");
+    assert.equal(hudLayer.className, "hud-layer");
+    assert.equal(canvas.dataset.renderStatus, "startup-error");
+    assert.match(canvas.dataset.renderError, /Unable to initialize renderer/);
+    assert.equal(errorLayer.className, "startup-error");
+    assert.match(errorLayer.textContent, /Renderer failed to start: Unable to initialize renderer/);
   });
 });
