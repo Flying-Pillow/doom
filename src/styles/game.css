@@ -1,0 +1,94 @@
+:root {
+  color-scheme: dark;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  background: #04070b;
+  color: #f6d07a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #04070b;
+}
+
+body {
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.game-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(142, 31, 0, 0.28), transparent 42%),
+    linear-gradient(180deg, #11161e 0%, #04070b 100%);
+}
+
+.game-stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(180deg, #1d2733 0%, #090d12 42%, #020304 100%);
+  image-rendering: pixelated;
+}
+
+.hud-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  pointer-events: none;
+}
+
+.hud-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.hud-slot {
+  min-width: min(12rem, 100%);
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(246, 208, 122, 0.45);
+  background: rgba(8, 10, 15, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+}
+
+.hud-slot:empty::after {
+  content: attr(data-hud-label);
+  opacity: 0.75;
+}
+
+noscript {
+  position: fixed;
+  inset: auto 1rem 1rem;
+  z-index: 2;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(246, 208, 122, 0.45);
+  background: rgba(8, 10, 15, 0.92);
+}
