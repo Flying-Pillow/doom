@@ -330,13 +330,26 @@ export function createRenderer(canvas, options = {}) {
     throw new TypeError("createRenderer expected a canvas-like object with getContext().");
   }
 
+  const preferredBackend = options.preferredBackend === "2d" ? "2d" : "webgl";
   const contextAttributes = {
     ...DEFAULT_CONTEXT_ATTRIBUTES,
     ...(options.contextAttributes ?? {}),
   };
-  const gl = canvas.getContext("webgl", contextAttributes)
-    ?? canvas.getContext("experimental-webgl", contextAttributes);
-  const context2d = gl ? null : canvas.getContext("2d");
+  let gl = null;
+  let context2d = null;
+
+  if (preferredBackend === "2d") {
+    context2d = canvas.getContext("2d");
+  }
+
+  if (!context2d) {
+    gl = canvas.getContext("webgl", contextAttributes)
+      ?? canvas.getContext("experimental-webgl", contextAttributes);
+  }
+
+  if (!gl && !context2d) {
+    context2d = canvas.getContext("2d");
+  }
 
   if (!gl && !context2d) {
     throw new Error("Unable to initialize renderer. A WebGL- or Canvas-capable browser is required.");

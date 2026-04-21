@@ -341,6 +341,42 @@ test("createRenderer falls back to 2d canvas when WebGL is unavailable", async (
   assert.equal(context2d.imageSmoothingEnabled, false);
 });
 
+test("createRenderer can prefer 2d canvas even when WebGL is available", async () => {
+  const { createRenderer } = await importModule(rendererJsUrl);
+  const requestedContexts = [];
+  const gl = new FakeWebGLContext();
+  const context2d = new FakeCanvas2DContext();
+  const canvas = {
+    width: 320,
+    height: 200,
+    getBoundingClientRect() {
+      return { width: 320, height: 200 };
+    },
+    getContext(type, attributes) {
+      requestedContexts.push({ type, attributes });
+
+      if (type === "2d") {
+        return context2d;
+      }
+
+      if (type === "webgl" || type === "experimental-webgl") {
+        return gl;
+      }
+
+      return null;
+    },
+  };
+
+  const renderer = createRenderer(canvas, { preferredBackend: "2d" });
+
+  assert.equal(renderer.backend, "2d");
+  assert.equal(renderer.gl, null);
+  assert.deepEqual(
+    requestedContexts.map(({ type }) => type),
+    ["2d"],
+  );
+});
+
 test("createInputController normalizes keyboard and mouse state into gameplay actions", async () => {
   const { createInputController } = await importModule(inputJsUrl);
   const keyboardTarget = new FakeEventTarget();
