@@ -58,6 +58,7 @@ class FakeWebGLContext {
     this.DEPTH_BUFFER_BIT = 0x0100;
     this.DEPTH_TEST = 0x0b71;
     this.LEQUAL = 0x0203;
+    this.SCISSOR_TEST = 0x0c11;
     this.calls = [];
   }
 
@@ -81,8 +82,16 @@ class FakeWebGLContext {
     this.calls.push(["viewport", value]);
   }
 
+  scissor(...value) {
+    this.calls.push(["scissor", value]);
+  }
+
   clear(value) {
     this.calls.push(["clear", value]);
+  }
+
+  disable(value) {
+    this.calls.push(["disable", value]);
   }
 }
 
@@ -353,6 +362,9 @@ test("bootFromDocument mounts the shell immediately when the document is ready",
     environment.window.runAnimationFrame(16);
     assert.equal(runtime.renderer.getFrameState().frame, 1);
     assert.equal(runtime.renderer.getFrameState().hud.health.value, "100");
+    assert.equal(runtime.renderer.getFrameState().worldRenderSummary.levelId, "level-01");
+    assert.ok(runtime.renderer.getFrameState().worldRenderSummary.visibleSpriteCount >= 1);
+    assert.equal(runtime.canvas.dataset.renderStatus, "scene-ready");
 
     const shell = environment.app.children[0];
     const stage = shell.children[0];
