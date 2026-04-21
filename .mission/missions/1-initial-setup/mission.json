@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "missionId": "1-initial-setup",
+  "configuration": {
+    "createdAt": "2026-04-21T18:43:15.479Z",
+    "source": "global-settings",
+    "workflowVersion": "mission-workflow-v1",
+    "workflow": {
+      "autostart": {
+        "mission": true
+      },
+      "humanInLoop": {
+        "enabled": true,
+        "pauseOnMissionStart": false
+      },
+      "panic": {
+        "terminateSessions": true,
+        "clearLaunchQueue": true,
+        "haltMission": true
+      },
+      "execution": {
+        "maxParallelTasks": 1,
+        "maxParallelSessions": 1
+      },
+      "stageOrder": [
+        "prd",
+        "spec",
+        "implementation",
+        "audit",
+        "delivery"
+      ],
+      "stages": {
+        "prd": {
+          "stageId": "prd",
+          "displayName": "PRD",
+          "taskLaunchPolicy": {
+            "defaultAutostart": true
+          }
+        },
+        "spec": {
+          "stageId": "spec",
+          "displayName": "Spec",
+          "taskLaunchPolicy": {
+            "defaultAutostart": true
+          }
+        },
+        "implementation": {
+          "stageId": "implementation",
+          "displayName": "Implement",
+          "taskLaunchPolicy": {
+            "defaultAutostart": false
+          }
+        },
+        "audit": {
+          "stageId": "audit",
+          "displayName": "Audit",
+          "taskLaunchPolicy": {
+            "defaultAutostart": true
+          }
+        },
+        "delivery": {
+          "stageId": "delivery",
+          "displayName": "Delivery",
+          "taskLaunchPolicy": {
+            "defaultAutostart": false
+          }
+        }
+      },
+      "taskGeneration": [
+        {
+          "stageId": "prd",
+          "artifactTasks": false,
+          "templateSources": [
+            {
+              "templateId": "prd-from-brief",
+              "path": "tasks/PRD/01-prd-from-brief.md"
+            }
+          ],
+          "tasks": []
+        },
+        {
+          "stageId": "spec",
+          "artifactTasks": false,
+          "templateSources": [
+            {
+              "templateId": "draft-spec",
+              "path": "tasks/SPEC/01-spec-from-prd.md"
+            },
+            {
+              "templateId": "plan-implementation",
+              "path": "tasks/SPEC/02-plan.md"
+            }
+          ],
+          "tasks": []
+        },
+        {
+          "stageId": "implementation",
+          "artifactTasks": true,
+          "templateSources": [],
+          "tasks": []
+        },
+        {
+          "stageId": "audit",
+          "artifactTasks": false,
+          "templateSources": [
+            {
+              "templateId": "debrief",
+              "path": "tasks/AUDIT/01-debrief.md"
+            },
+            {
+              "templateId": "touchdown",
+              "path": "tasks/AUDIT/02-touchdown.md"
+            }
+          ],
+          "tasks": []
+        },
+        {
+          "stageId": "delivery",
+          "artifactTasks": false,
+          "templateSources": [],
+          "tasks": []
+        }
+      ],
+      "gates": [
+        {
+          "gateId": "implement",
+          "intent": "implement",
+          "stageId": "implementation"
+        },
+        {
+          "gateId": "verify",
+          "intent": "verify",
+          "stageId": "implementation"
+        },
+        {
+          "gateId": "audit",
+          "intent": "audit",
+          "stageId": "audit"
+        },
+        {
+          "gateId": "deliver",
+          "intent": "deliver",
+          "stageId": "delivery"
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "lifecycle": "running",
+    "activeStageId": "prd",
+    "pause": {
+      "paused": false
+    },
+    "panic": {
+      "active": false,
+      "terminateSessions": true,
+      "clearLaunchQueue": true,
+      "haltMission": true
+    },
+    "stages": [
+      {
+        "stageId": "prd",
+        "lifecycle": "blocked",
+        "taskIds": [],
+        "readyTaskIds": [],
+        "queuedTaskIds": [],
+        "runningTaskIds": [],
+        "blockedTaskIds": [],
+        "completedTaskIds": []
+      },
+      {
+        "stageId": "spec",
+        "lifecycle": "pending",
+        "taskIds": [],
+        "readyTaskIds": [],
+        "queuedTaskIds": [],
+        "runningTaskIds": [],
+        "blockedTaskIds": [],
+        "completedTaskIds": []
+      },
+      {
+        "stageId": "implementation",
+        "lifecycle": "pending",
+        "taskIds": [],
+        "readyTaskIds": [],
+        "queuedTaskIds": [],
+        "runningTaskIds": [],
+        "blockedTaskIds": [],
+        "completedTaskIds": []
+      },
+      {
+        "stageId": "audit",
+        "lifecycle": "pending",
+        "taskIds": [],
+        "readyTaskIds": [],
+        "queuedTaskIds": [],
+        "runningTaskIds": [],
+        "blockedTaskIds": [],
+        "completedTaskIds": []
+      },
+      {
+        "stageId": "delivery",
+        "lifecycle": "pending",
+        "taskIds": [],
+        "readyTaskIds": [],
+        "queuedTaskIds": [],
+        "runningTaskIds": [],
+        "blockedTaskIds": [],
+        "completedTaskIds": []
+      }
+    ],
+    "tasks": [],
+    "sessions": [],
+    "gates": [
+      {
+        "gateId": "implement",
+        "intent": "implement",
+        "state": "blocked",
+        "stageId": "implementation",
+        "reasons": [
+          "Stage 'implementation' is not completed."
+        ],
+        "updatedAt": "2026-04-21T18:43:15.479Z"
+      },
+      {
+        "gateId": "verify",
+        "intent": "verify",
+        "state": "blocked",
+        "stageId": "implementation",
+        "reasons": [
+          "Stage 'implementation' is not completed."
+        ],
+        "updatedAt": "2026-04-21T18:43:15.479Z"
+      },
+      {
+        "gateId": "audit",
+        "intent": "audit",
+        "state": "blocked",
+        "stageId": "audit",
+        "reasons": [
+          "Stage 'audit' is not completed."
+        ],
+        "updatedAt": "2026-04-21T18:43:15.479Z"
+      },
+      {
+        "gateId": "deliver",
+        "intent": "deliver",
+        "state": "blocked",
+        "stageId": "delivery",
+        "reasons": [
+          "Stage 'delivery' is not completed."
+        ],
+        "updatedAt": "2026-04-21T18:43:15.479Z"
+      }
+    ],
+    "launchQueue": [],
+    "updatedAt": "2026-04-21T18:43:15.479Z"
+  }
+}

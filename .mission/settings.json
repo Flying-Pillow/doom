@@ -1,0 +1,7 @@
+{
+  "missionWorkspaceRoot": "missions",
+  "trackingProvider": "github",
+  "instructionsPath": ".agents",
+  "skillsPath": ".agents/skills",
+  "agentRunner": "copilot-cli"
+}

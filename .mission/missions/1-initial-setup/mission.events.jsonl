@@ -1,0 +1,2 @@
+{"eventId":"1-initial-setup:mission-created","type":"mission.created","occurredAt":"2026-04-21T18:43:15.479Z","source":"system","payload":{}}
+{"eventId":"1-initial-setup:mission-started","type":"mission.started","occurredAt":"2026-04-21T18:43:15.479Z","source":"system","payload":{}}
