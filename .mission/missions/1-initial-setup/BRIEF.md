@@ -10,7 +10,7 @@ url: "https://github.com/Flying-Pillow/doom/issues/1"
 
 Issue: #1
 
-**Title:** Create a Doom clone with HTML and JavaScript
+# **Title:** Create a Doom clone with HTML and JavaScript
 
 **Description:**
 
