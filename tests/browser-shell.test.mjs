@@ -372,12 +372,18 @@ test("bootFromDocument mounts the shell immediately when the document is ready",
     assert.equal(runtime.state.currentLevelId, "level-01");
     assert.equal(runtime.state.player.weaponId, "pistol");
     assert.equal(runtime.hudLayer.className, "hud-layer");
+    assert.equal(runtime.renderer.backend, "2d");
     assert.equal(runtime.canvas.width, 2560);
     assert.equal(runtime.canvas.height, 1440);
     assert.equal(environment.window.listenerCount("resize"), 1);
+    assert.equal(runtime.renderer.getFrameState().frame, 1);
+    assert.equal(runtime.renderer.getFrameState().hud.health.value, "100");
+    assert.equal(runtime.renderer.getFrameState().worldRenderSummary.levelId, "level-01");
+    assert.ok(runtime.renderer.getFrameState().worldRenderSummary.visibleSpriteCount >= 1);
+    assert.equal(runtime.canvas.dataset.renderStatus, "scene-ready");
 
     environment.window.runAnimationFrame(16);
-    assert.equal(runtime.renderer.getFrameState().frame, 1);
+    assert.equal(runtime.renderer.getFrameState().frame, 2);
     assert.equal(runtime.renderer.getFrameState().hud.health.value, "100");
     assert.equal(runtime.renderer.getFrameState().worldRenderSummary.levelId, "level-01");
     assert.ok(runtime.renderer.getFrameState().worldRenderSummary.visibleSpriteCount >= 1);
@@ -428,6 +434,7 @@ test("module bootstrap waits for DOMContentLoaded when the document is still loa
 
     const runtime = environment.window.__DOOM_RUNTIME__;
     assert.ok(runtime);
+    assert.equal(runtime.renderer.backend, "2d");
     assert.equal(runtime.canvas.width, 2560);
     assert.equal(runtime.canvas.height, 1440);
     assert.equal(typeof runtime.renderer.resize, "function");
@@ -435,6 +442,7 @@ test("module bootstrap waits for DOMContentLoaded when the document is still loa
     assert.equal(typeof runtime.audio.playMusic, "function");
     assert.equal(runtime.state.currentLevelId, "level-01");
     assert.equal(runtime.state.player.health, 100);
+    assert.equal(runtime.renderer.getFrameState().frame, 1);
     assert.deepEqual(getHudSlotNames(runtime.hudLayer), [
       "mission",
       "status",

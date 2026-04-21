@@ -75,6 +75,26 @@ function playLevelMusic(runtime, levelId, playbackOptions = {}) {
   }
 }
 
+function renderRuntimeFrame(runtime, timestamp = 0) {
+  const frameState = runtime.renderer.beginFrame({ timestamp });
+  const previousLevelId = runtime.state.currentLevelId;
+  const inputSnapshot = runtime.input.consumeFrameInput();
+
+  updatePlayer(runtime.state, inputSnapshot, frameState.deltaMs);
+  updateEnemies(runtime.state, frameState.deltaMs);
+  resolveCombat(runtime.state, frameState.deltaMs);
+  runtime.state = updateLevelProgression(runtime.state);
+  syncRuntimeHud(runtime);
+
+  if (runtime.state.currentLevelId !== previousLevelId) {
+    playLevelMusic(runtime, runtime.state.currentLevelId, { restart: true });
+  }
+
+  runtime.renderer.drawWorld(runtime.state);
+  runtime.renderer.drawHud(runtime.state.hudState);
+  runtime.renderer.endFrame();
+}
+
 export function startGame(rootElement) {
   if (!(rootElement instanceof HTMLElement)) {
     throw new TypeError("startGame expected a root HTMLElement.");
@@ -99,7 +119,7 @@ export function startGame(rootElement) {
 
   let renderer;
   try {
-    renderer = createRenderer(canvas);
+    renderer = createRenderer(canvas, { preferredBackend: "2d" });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     canvas.dataset.renderStatus = "startup-error";
@@ -127,22 +147,7 @@ export function startGame(rootElement) {
       return;
     }
 
-    const frameState = renderer.beginFrame({ timestamp });
-    const previousLevelId = runtime.state.currentLevelId;
-    const inputSnapshot = input.consumeFrameInput();
-    updatePlayer(runtime.state, inputSnapshot, frameState.deltaMs);
-    updateEnemies(runtime.state, frameState.deltaMs);
-    resolveCombat(runtime.state, frameState.deltaMs);
-    runtime.state = updateLevelProgression(runtime.state);
-    syncRuntimeHud(runtime);
-
-    if (runtime.state.currentLevelId !== previousLevelId) {
-      playLevelMusic(runtime, runtime.state.currentLevelId, { restart: true });
-    }
-
-    renderer.drawWorld(runtime.state);
-    renderer.drawHud(runtime.state.hudState);
-    renderer.endFrame();
+    renderRuntimeFrame(runtime, timestamp);
 
     if (requestFrame) {
       animationFrameId = requestFrame(frame);
@@ -164,7 +169,7 @@ export function startGame(rootElement) {
       running = true;
       input.start();
       handleResize();
-      syncRuntimeHud(runtime);
+      renderRuntimeFrame(runtime, 0);
       playLevelMusic(runtime, runtime.state.currentLevelId);
       window.addEventListener("resize", handleResize);
 
