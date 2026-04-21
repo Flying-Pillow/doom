@@ -47,6 +47,7 @@ class FakeWebGLContext {
     this.DEPTH_BUFFER_BIT = 0x0100;
     this.DEPTH_TEST = 0x0b71;
     this.LEQUAL = 0x0203;
+    this.SCISSOR_TEST = 0x0c11;
     this.calls = [];
   }
 
@@ -70,8 +71,16 @@ class FakeWebGLContext {
     this.calls.push(["viewport", value]);
   }
 
+  scissor(...value) {
+    this.calls.push(["scissor", value]);
+  }
+
   clear(value) {
     this.calls.push(["clear", value]);
+  }
+
+  disable(value) {
+    this.calls.push(["disable", value]);
   }
 }
 
@@ -150,18 +159,83 @@ test("createRenderer initializes WebGL, resizes the canvas, and tracks frame sta
   });
 
   const firstFrame = renderer.beginFrame({ timestamp: 16 });
-  renderer.drawWorld({ sectorCount: 4 });
+  const worldSummary = renderer.drawWorld({
+    currentLevelId: "level-01",
+    player: {
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { yaw: 0, pitch: 0, roll: 0 },
+      weaponId: "pistol",
+    },
+    enemies: [
+      {
+        id: "trooper-1",
+        type: "trooper",
+        health: 20,
+        position: { x: 0, y: 0, z: 8 },
+      },
+    ],
+    pickups: [
+      {
+        id: "blue-key",
+        kind: "key",
+        color: "blue",
+        position: { x: 2, y: 0, z: 12 },
+      },
+    ],
+    doors: [
+      {
+        id: "exit-door",
+        kind: "exit",
+        locked: true,
+        position: { x: 0, y: 0, z: 16 },
+      },
+    ],
+  });
   renderer.drawHud({ health: 100 });
   const finishedFrame = renderer.endFrame();
 
   assert.equal(firstFrame.deltaMs, 0);
   assert.deepEqual(finishedFrame, {
     frame: 0,
-    world: { sectorCount: 4 },
+    world: {
+      currentLevelId: "level-01",
+      player: {
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { yaw: 0, pitch: 0, roll: 0 },
+        weaponId: "pistol",
+      },
+      enemies: [
+        {
+          id: "trooper-1",
+          type: "trooper",
+          health: 20,
+          position: { x: 0, y: 0, z: 8 },
+        },
+      ],
+      pickups: [
+        {
+          id: "blue-key",
+          kind: "key",
+          color: "blue",
+          position: { x: 2, y: 0, z: 12 },
+        },
+      ],
+      doors: [
+        {
+          id: "exit-door",
+          kind: "exit",
+          locked: true,
+          position: { x: 0, y: 0, z: 16 },
+        },
+      ],
+    },
     hud: { health: 100 },
   });
+  assert.equal(worldSummary.levelId, "level-01");
+  assert.ok(worldSummary.visibleSpriteCount >= 3);
   assert.ok(gl.calls.some(([name]) => name === "viewport"));
   assert.ok(gl.calls.some(([name]) => name === "clear"));
+  assert.ok(gl.calls.some(([name]) => name === "scissor"));
 
   canvas.getBoundingClientRect = () => ({ width: 640, height: 360 });
   renderer.resize();
