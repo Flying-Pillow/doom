@@ -1,0 +1,8 @@
+{
+  "name": "doom",
+  "private": true,
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  }
+}
