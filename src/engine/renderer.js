@@ -44,6 +44,11 @@ function normalizeColor(color) {
   });
 }
 
+function toCssColor(color) {
+  const [red, green, blue, alpha] = normalizeColor(color);
+  return `rgba(${Math.round(red * 255)}, ${Math.round(green * 255)}, ${Math.round(blue * 255)}, ${alpha})`;
+}
+
 function shadeColor(color, multiplier) {
   return [
     clamp(color[0] * multiplier, 0, 1),
@@ -331,14 +336,18 @@ export function createRenderer(canvas, options = {}) {
   };
   const gl = canvas.getContext("webgl", contextAttributes)
     ?? canvas.getContext("experimental-webgl", contextAttributes);
+  const context2d = gl ? null : canvas.getContext("2d");
 
-  if (!gl) {
-    throw new Error("Unable to initialize WebGL. A WebGL-capable browser is required.");
+  if (!gl && !context2d) {
+    throw new Error("Unable to initialize renderer. A WebGL- or Canvas-capable browser is required.");
   }
 
-  const canFillRects = typeof gl.scissor === "function"
-    && typeof gl.clearColor === "function"
-    && typeof gl.clear === "function";
+  const backend = gl ? "webgl" : "2d";
+  const canFillRects = gl
+    ? typeof gl.scissor === "function"
+      && typeof gl.clearColor === "function"
+      && typeof gl.clear === "function"
+    : typeof context2d.fillRect === "function";
   let clearColor = normalizeColor(options.clearColor ?? DEFAULT_CLEAR_COLOR);
   let frameNumber = 0;
   let lastTimestamp = null;
@@ -351,19 +360,19 @@ export function createRenderer(canvas, options = {}) {
     aspectRatio: canvas.height > 0 ? canvas.width / canvas.height : 1,
   };
 
-  if (typeof gl.clearColor === "function") {
+  if (gl && typeof gl.clearColor === "function") {
     gl.clearColor(...clearColor);
   }
 
-  if (typeof gl.clearDepth === "function") {
+  if (gl && typeof gl.clearDepth === "function") {
     gl.clearDepth(1);
   }
 
-  if (typeof gl.enable === "function" && gl.DEPTH_TEST !== undefined) {
+  if (gl && typeof gl.enable === "function" && gl.DEPTH_TEST !== undefined) {
     gl.enable(gl.DEPTH_TEST);
   }
 
-  if (typeof gl.depthFunc === "function" && gl.LEQUAL !== undefined) {
+  if (gl && typeof gl.depthFunc === "function" && gl.LEQUAL !== undefined) {
     gl.depthFunc(gl.LEQUAL);
   }
 
@@ -374,8 +383,12 @@ export function createRenderer(canvas, options = {}) {
       aspectRatio: height > 0 ? width / height : 1,
     };
 
-    if (typeof gl.viewport === "function") {
+    if (gl && typeof gl.viewport === "function") {
       gl.viewport(0, 0, width, height);
+    }
+
+    if (context2d && "imageSmoothingEnabled" in context2d) {
+      context2d.imageSmoothingEnabled = false;
     }
 
     return { ...viewport };
@@ -398,7 +411,7 @@ export function createRenderer(canvas, options = {}) {
   function setClearColor(nextColor) {
     clearColor = normalizeColor(nextColor);
 
-    if (typeof gl.clearColor === "function") {
+    if (gl && typeof gl.clearColor === "function") {
       gl.clearColor(...clearColor);
     }
 
@@ -419,18 +432,23 @@ export function createRenderer(canvas, options = {}) {
       return false;
     }
 
-    if (typeof gl.enable === "function" && gl.SCISSOR_TEST !== undefined) {
-      gl.enable(gl.SCISSOR_TEST);
-    }
+    if (gl) {
+      if (typeof gl.enable === "function" && gl.SCISSOR_TEST !== undefined) {
+        gl.enable(gl.SCISSOR_TEST);
+      }
 
-    gl.scissor(
-      clampedX,
-      viewport.height - clampedY - clampedHeight,
-      clampedWidth,
-      clampedHeight,
-    );
-    gl.clearColor(...normalizeColor(color));
-    gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.scissor(
+        clampedX,
+        viewport.height - clampedY - clampedHeight,
+        clampedWidth,
+        clampedHeight,
+      );
+      gl.clearColor(...normalizeColor(color));
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    } else if (context2d) {
+      context2d.fillStyle = toCssColor(color);
+      context2d.fillRect(clampedX, clampedY, clampedWidth, clampedHeight);
+    }
 
     return true;
   }
@@ -494,12 +512,17 @@ export function createRenderer(canvas, options = {}) {
     const deltaMs = lastTimestamp === null ? 0 : Math.max(0, timestamp - lastTimestamp);
     lastTimestamp = timestamp;
 
-    if (typeof gl.clearColor === "function") {
-      gl.clearColor(...clearColor);
-    }
+    if (gl) {
+      if (typeof gl.clearColor === "function") {
+        gl.clearColor(...clearColor);
+      }
 
-    if (typeof gl.clear === "function") {
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      if (typeof gl.clear === "function") {
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      }
+    } else if (context2d) {
+      context2d.fillStyle = toCssColor(clearColor);
+      context2d.fillRect(0, 0, viewport.width, viewport.height);
     }
 
     return {
@@ -521,11 +544,11 @@ export function createRenderer(canvas, options = {}) {
 
     drawWeaponOverlay(worldState);
 
-    if (canFillRects && typeof gl.clearColor === "function") {
+    if (gl && canFillRects && typeof gl.clearColor === "function") {
       gl.clearColor(...clearColor);
     }
 
-    if (canFillRects && typeof gl.disable === "function" && gl.SCISSOR_TEST !== undefined) {
+    if (gl && canFillRects && typeof gl.disable === "function" && gl.SCISSOR_TEST !== undefined) {
       gl.disable(gl.SCISSOR_TEST);
     }
 
@@ -569,6 +592,7 @@ export function createRenderer(canvas, options = {}) {
     return {
       frame: frameNumber,
       lastTimestamp,
+      backend,
       clearColor: [...clearColor],
       viewport: getViewport(),
       world: lastWorldState,
@@ -582,6 +606,7 @@ export function createRenderer(canvas, options = {}) {
   return {
     canvas,
     gl,
+    backend,
     resize,
     beginFrame,
     drawWorld,
